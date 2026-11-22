@@ -1,6 +1,9 @@
 # Calculadora de IMC
 
-API em [Nest.js](https://nestjs.com) que calcula o Índice de Massa Corporal (IMC) no backend, com documentação Swagger.
+Monorepo (npm workspaces) com:
+
+- **`apps/api`**: API em [Nest.js](https://nestjs.com) que calcula o Índice de Massa Corporal (IMC) no backend, com documentação Swagger.
+- **`apps/web`**: frontend em [Next.js](https://nextjs.org) (React) com um formulário que envia peso e altura para a API e exibe o resultado.
 
 ```
 IMC = peso (kg) / altura² (m)
@@ -21,25 +24,37 @@ O IMC é arredondado para 2 casas decimais antes de classificar (30,00 é Sobrep
 
 ## Como executar
 
+Na raiz do repositório:
+
 ```bash
-npm install
-npm run start:dev      # desenvolvimento, com reload
+npm install          # instala as dependências de todos os apps
+npm run dev          # sobe API (3000) e frontend (3001) juntos
 ```
+
+Ou separadamente: `npm run dev:api` e `npm run dev:web`.
 
 Para produção:
 
 ```bash
 npm run build
-npm run start:prod
+npm run start:prod -w apps/api
+npm run start -w apps/web
 ```
 
-A aplicação sobe em `http://localhost:3000` (altere com a variável `PORT`).
+| URL                               | O que é                      |
+| --------------------------------- | ---------------------------- |
+| `http://localhost:3001`           | Frontend (formulário de IMC) |
+| `POST http://localhost:3000/imc`  | Endpoint de cálculo          |
+| `http://localhost:3000/docs`      | Documentação Swagger         |
+| `http://localhost:3000/docs-json` | Especificação OpenAPI (JSON) |
 
-| URL                              | O que é                      |
-| -------------------------------- | ---------------------------- |
-| `POST http://localhost:3000/imc` | Endpoint de cálculo          |
-| `http://localhost:3000/docs`     | Documentação Swagger da API  |
-| `http://localhost:3000/docs-json`| Especificação OpenAPI (JSON) |
+### Configuração
+
+| Variável               | App | Padrão                  | Descrição                                            |
+| ---------------------- | --- | ----------------------- | ---------------------------------------------------- |
+| `PORT`                 | api | `3000`                  | Porta da API                                         |
+| `CORS_ORIGIN`          | api | `http://localhost:3001` | Origens permitidas (separadas por vírgula)           |
+| `NEXT_PUBLIC_API_URL`  | web | `http://localhost:3000` | URL da API, lida no build do frontend (`apps/web/.env.example`) |
 
 ## API
 
@@ -77,19 +92,19 @@ Resposta `400` para valores inválidos:
 ## Testes
 
 ```bash
-npm test           # unitários
-npm run test:e2e   # ponta a ponta
+npm test           # unitários (api)
+npm run test:e2e   # ponta a ponta (api)
 ```
 
 ## Estrutura
 
 ```
-src/
-  main.ts                  # bootstrap, validação e Swagger
-  app.module.ts
-  imc/
-    imc.controller.ts      # POST /imc
-    imc.service.ts         # cálculo e classificação
-    calcular-imc.dto.ts    # validação da entrada
-test/app.e2e-spec.ts       # testes e2e
+apps/
+  api/                       # Nest.js
+    src/main.ts              # bootstrap, CORS, validação e Swagger
+    src/imc/                 # controller, service e DTO do cálculo
+    test/app.e2e-spec.ts     # testes e2e
+  web/                       # Next.js
+    src/app/page.tsx         # página
+    src/app/imc-form.tsx     # formulário que chama a API
 ```
